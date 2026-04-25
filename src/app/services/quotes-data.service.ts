@@ -144,10 +144,12 @@ export class QuotesDataService { //Service to handle data
           switch (err.name) {
             case 'TimeoutError': 
             errMsg = `Warning: There has been no new quote for ${ENV.STREAM_TIMEOUT/1000} sec...`
+            this.disconnectFromServer() //??
             break
           }
           this.quotesWS$.closed===false && this.connectionState$.getValue()!=='Reconnecting' ? this.snacksService.openSnack(errMsg,'Okay','error-snackBar') : null;
-          return of(this.quotesDataArray)
+          return of([]) //??
+          // return of(this.quotesDataArray)
         }),
       )));
   };

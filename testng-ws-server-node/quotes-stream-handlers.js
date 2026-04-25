@@ -13,8 +13,8 @@ class Rate {
   chgUpDown;
 }
 const quoteDeviationRate = 500;
-var wsStreamMockInt; // interval to mock data stream from server
-var ws_timeout;
+var wsStreamMockInt = []; // interval to mock data stream from server
+var ws_timeout = [];
 process.send = process.send || console.log 
 
 export function shareConnectionStatus (wsServer, msg, details='') {
@@ -22,8 +22,8 @@ export function shareConnectionStatus (wsServer, msg, details='') {
 }
 
 export function stopQuotesStreams (wsServer,msg) {
-  typeof wsStreamMockInt !== "undefined"? clearInterval(wsStreamMockInt) : null; // stop intervals from emmision
-  typeof ws_timeout !== "undefined" ? clearTimeout(ws_timeout) : null; // stop times to stop emmision;
+  typeof wsStreamMockInt !== "undefined"? wsStreamMockInt.forEach(ti=>clearInterval(ti)) : null; // stop intervals from emmision
+  typeof ws_timeout !== "undefined" ? ws_timeout.forEach(to=>clearTimeout(to)) : null; // stop times to stop emmision;
   wsServer? shareConnectionStatus (wsServer, msg) : null;
   process.send(['Stream has been stopped'])
 }
@@ -39,7 +39,7 @@ export function simulateRatesFlow (wsServer, timeToWork = 60 * 30, intervalToEmi
     switchMap(source => source==='m'? moexRead() : nasdaqRead()),
     tap(symbols => {
       symbols.forEach(el=>el.VALUE=el.OPEN)
-      wsStreamMockInt = setInterval(() => {
+      wsStreamMockInt.push(setInterval(() => {
         let ratesSet = []; // quotes set to be emited from the mock server
         symbols.forEach((symbol) => {
           let changeQuote = Math.round(Math.random() * 0.53); //flag to generate or not quotes for the specific instrument
@@ -59,8 +59,8 @@ export function simulateRatesFlow (wsServer, timeToWork = 60 * 30, intervalToEmi
           }
         });
         wsServer.clients.forEach(client => client.readyState === 1 && client.manage !=='/manage_connection'? client.send(JSON.stringify(ratesSet)) : null);
-      }, intervalToEmit);
-      ws_timeout = setTimeout(() => {stopQuotesStreams(wsServer,'stream_stopped')}, timeToWork*1000);//setting timer to stop emmision after given time d
+      }, intervalToEmit));
+      ws_timeout.push(setTimeout(() => {stopQuotesStreams(wsServer,'stream_stopped')}, timeToWork*1000));//setting timer to stop emmision after given time d
     }),
     catchError(err=>{
       console.log(err.message);

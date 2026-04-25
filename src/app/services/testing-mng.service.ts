@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, catchError, EMPTY, of,  repeat, switchMap, tap, throwError } from 'rxjs';
+import { BehaviorSubject, catchError, EMPTY, interval, of,  repeat, Subscription, switchMap, tap, throwError } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { ENV } from 'src/environments/environment';
 import { SnacksService } from './snacks.service';
@@ -28,6 +28,8 @@ export class TestingMngService { //Service to handle testing functionaly
   private closeConnectionErrorCode:number;
   private conecctionRetryCount:number = 2;
   private connectionAttemptN:number = 0;
+  private pingInterval = interval(60000).pipe(tap(()=>this.webSocketTest.next({message:'ping'})));
+  private pingIntervalSub = new Subscription
   ngOnDestroy(): void {
     this.webSocketTest.closed? null : this.webSocketTest.unsubscribe();   
   }
@@ -42,12 +44,14 @@ export class TestingMngService { //Service to handle testing functionaly
         this.serverConnection$.next(true);
         this.connectionAttemptN = 0;
         this.cmdCurrent? this.webSocketTest.next(this.cmdCurrent):null;
+        this.pingIntervalSub = this.pingInterval.subscribe()
       }},
       closeObserver:{next: (event)=>{
         console.log('createTestingStream closed. code:',event.code)
         this.closeConnectionErrorCode = event.code
         this.streamStarted$.next(false);
         this.serverConnection$.next(false);
+        this.pingIntervalSub.unsubscribe()
        }}
       })
     this.webSocketTest.pipe(

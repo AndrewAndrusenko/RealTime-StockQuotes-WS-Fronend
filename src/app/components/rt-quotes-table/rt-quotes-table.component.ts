@@ -55,7 +55,8 @@ export class RTQuotesTableComponent {
       .pipe(
         switchMap(data=> {
           const filterArray = this.filterQuotesList.getRawValue().toLocaleLowerCase().split(',').map(el=>el.trim());
-          return of(filterArray[0].length>0? data.filter(row=>filterArray.includes(row.symbol.toLocaleLowerCase())) : data) 
+          // return of( data.slice(1,51)) 
+          return of(filterArray[0].length>0? data.filter(row=>filterArray.includes(row.symbol.toLocaleLowerCase())) : data.slice(1,51)) 
         })
       );
   }
