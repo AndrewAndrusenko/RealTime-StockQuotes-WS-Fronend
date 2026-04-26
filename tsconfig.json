@@ -3,7 +3,6 @@
   "compileOnSave": false,
   "compilerOptions": {
     "skipLibCheck": true,
-
     "baseUrl": "./",
     "outDir": "./dist/out-tsc",
     "esModuleInterop": true,
@@ -16,7 +15,7 @@
     "sourceMap": true,
     "declaration": false,
     "experimentalDecorators": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "importHelpers": true,
     "target": "ES2022",
     "module": "ES2022",

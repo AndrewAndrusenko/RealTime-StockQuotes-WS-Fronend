@@ -1,50 +1,58 @@
 <main>
   <details open class="mng-panel">
-  <summary class="mng-panel__header">
-    Test Server Panel - Server:
-    <span 
-      class="mng-panel__header__status" 
-      [ngClass]="(this.testingService.serverConnection$ | async)? 'Connected':'Disconnected'">
-      {{(this.testingService.serverConnection$ | async)? ' Connected':' Disconnected'}}
-    </span>
-  </summary>
-  <form [formGroup]="manageStreamForm">
-    <button #manage mat-button [disabled]="manageStreamForm.invalid" 
-      [ngClass]="(quotesStreamIsStarted | async)? 'form__button-stream stop-stream' : 'form__button-stream start-stream'" 
-      (click)="manageStream();">
-      <mat-icon>
-        {{(quotesStreamIsStarted | async)?'cancel' : 'smart_display'}}
-      </mat-icon>
-      <span class="form__button-stream-text" #status>
-        {{ (quotesStreamIsStarted | async)? "Stop" : "Start" }} ws test-server
-      </span> 
-    </button>
-    <div class="form__parameters">
-      <mat-form-field>
-        <input matInput placeholder="TimeToWork" matTooltip="Stream time in seconds" formControlName="timeToWork" id="time" autocomplete="on">
-        <mat-error *ngIf="timeToWork?.errors?.['required']">
-          Please set value
-        </mat-error>
-        <mat-error *ngIf="timeToWork?.errors?.['pattern']">
-          Only numbers
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field>
-        <input matInput placeholder="Interval" matTooltip="Emit interval in milliseconds" formControlName="intervalToEmit">
-        <mat-error *ngIf="interval?.errors?.['required']">
-          Please set value
-        </mat-error>
-        <mat-error *ngIf="interval?.errors?.['pattern']">
-          Only numbers
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field>
-        <mat-select formControlName="market" >
-          <mat-option  [value]="'m'"> MOEX</mat-option>
-          <mat-option  [value]="'n'"> Nasdaq</mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-  </form>
-</details>
+    <summary class="mng-panel__header">
+      Test Server Panel - Server:
+      <span
+        class="mng-panel__header__status"
+        [ngClass]="(this.testingService.serverConnection$ | async)? 'Connected':'Disconnected'">
+        {{(this.testingService.serverConnection$ | async)? ' Connected':' Disconnected'}}
+      </span>
+    </summary>
+    <form [formGroup]="manageStreamForm">
+      <button #manage mat-button [disabled]="manageStreamForm.invalid"
+        [ngClass]="(quotesStreamIsStarted | async)? 'form__button-stream stop-stream' : 'form__button-stream start-stream'"
+        (click)="manageStream();">
+        <mat-icon>
+          {{(quotesStreamIsStarted | async)?'cancel' : 'smart_display'}}
+        </mat-icon>
+        <span class="form__button-stream-text" #status>
+          {{ (quotesStreamIsStarted | async)? "Stop" : "Start" }} ws test-server
+        </span>
+      </button>
+      <div class="form__parameters">
+        <mat-form-field>
+          <input matInput placeholder="TimeToWork" matTooltip="Stream time in seconds" formControlName="timeToWork" id="time" autocomplete="on">
+          @if (timeToWork?.errors?.['required']) {
+            <mat-error>
+              Please set value
+            </mat-error>
+          }
+          @if (timeToWork?.errors?.['pattern']) {
+            <mat-error>
+              Only numbers
+            </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field>
+          <input matInput placeholder="Interval" matTooltip="Emit interval in milliseconds" formControlName="intervalToEmit">
+          @if (interval?.errors?.['required']) {
+            <mat-error>
+              Please set value
+            </mat-error>
+          }
+          @if (interval?.errors?.['pattern']) {
+            <mat-error>
+              Only numbers
+            </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field>
+          <mat-select formControlName="market" >
+            <mat-option  [value]="'m'"> MOEX</mat-option>
+            <mat-option  [value]="'n'"> Nasdaq</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </form>
+  </details>
 </main>
