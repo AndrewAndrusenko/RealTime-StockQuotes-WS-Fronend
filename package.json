@@ -29,7 +29,7 @@
     "@angular/platform-browser-dynamic": "^16.2.12",
     "@angular/router": "^16.2.12",
     "mock-socket": "^9.3.1",
-    "ngx-cookie-service": "^15.0.0",
+    "ngx-cookie-service": "^16.0.0",
     "ngx-indexed-db": "^16.0.0",
     "rxjs": "~7.5.0",
     "ts-node": "^10.9.2",
