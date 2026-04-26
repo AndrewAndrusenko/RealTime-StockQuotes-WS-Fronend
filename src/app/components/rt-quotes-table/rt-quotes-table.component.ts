@@ -6,10 +6,11 @@ import { FormControl } from '@angular/forms';
 import { AppStorage, StorageService, StorageType } from 'src/app/services/storage.service';
 import { AuthService } from 'src/app/services/auth.service';
 @Component({
-  selector: 'app-rt-quotes-table',
-  templateUrl: './rt-quotes-table.component.html',
-  styleUrls: ['./rt-quotes-table.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-rt-quotes-table',
+    templateUrl: './rt-quotes-table.component.html',
+    styleUrls: ['./rt-quotes-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class RTQuotesTableComponent {
   public showPanels:boolean = true;

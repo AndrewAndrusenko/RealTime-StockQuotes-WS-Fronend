@@ -4,10 +4,11 @@ import { Observable } from 'rxjs';
 import { TestingMngService } from 'src/app/services/testing-mng.service';
 
 @Component({
-  selector: 'app-testing-panel',
-  templateUrl: './testing-panel.component.html',
-  styleUrls: ['./testing-panel.component.scss'],
-  changeDetection:ChangeDetectionStrategy.OnPush
+    selector: 'app-testing-panel',
+    templateUrl: './testing-panel.component.html',
+    styleUrls: ['./testing-panel.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class TestingPanelComponent {
   public quotesStreamIsStarted:Observable<boolean> =  this.testingService.streamStarted$.asObservable()   //Status of the quotes stream
