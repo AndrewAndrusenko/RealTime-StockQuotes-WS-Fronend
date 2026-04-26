@@ -62,10 +62,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "real-time-quotes:build:production"
+              "buildTarget": "real-time-quotes:build:production"
             },
             "development": {
-              "browserTarget": "real-time-quotes:build:development"
+              "buildTarget": "real-time-quotes:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -73,7 +73,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "real-time-quotes:build"
+            "buildTarget": "real-time-quotes:build"
           }
         },
         "lint": {
