@@ -1,4 +1,4 @@
-@import '../../../styles/mixins_media.scss';
+@use '../../../styles/mixins_media.scss' as *;
 :host {
   display: flex;
 }

@@ -1,5 +1,5 @@
 
-@import '../../../styles/mixins_media.scss';
+@use '../../../styles/mixins_media.scss' as *;
 .mat-button-disabled {
   background-color: red !important
 }
