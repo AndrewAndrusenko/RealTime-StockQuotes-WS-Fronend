@@ -71,5 +71,11 @@ FrontEnd:
 Backend:
 1. testng-ws-server-node/auth-module.ts: Fixed verifyAccess function (handle case when clint doesn't have jwt cookies at all)
 
-
-
+09/07/26-11/07/26
+1. Prettier styles have been applied
+2. New design model has been implemented. Added mixins and updated styles. Fixes.
+3. Building scripts have been updated
+4. HTML Templates - introduced let variables to handle async pipes subscriptions
+5. TS - strict initialization rule has been applied
+6. BehaviourSubject encapsulation has been integrated for main services via getters and methods to update data 
+7. ENV updated

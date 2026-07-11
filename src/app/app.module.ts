@@ -59,7 +59,6 @@ export const IndexDBConfig: DBConfig  = {
         MatProgressBarModule,
         MatMenuModule,
         NgxIndexedDBModule.forRoot(IndexDBConfig)], providers: [
-        provideAnimations(),
         {
             provide: HTTP_INTERCEPTORS,
             useClass: HttpErrorsHandlerInterceptor,

@@ -3,22 +3,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 :root {
   --contentWidth :44vw;
-
-  --color-text-dark: #191a23;
-  --color-text-light:#FFFFFF;
-  --color-text-header:#53565b;
-  --background-color:rgb(193, 201, 213);
-  --color-text-error:#e75a5a;
-  --mobile-font-size:12px;
-  
-  --border: 1px solid var(--color-dark);
-  --border-radius: 14px;
-  --border-radius-large: 45px;
-
-  --shadow:0 5px 0 0 var(--color-dark-alt);
-
-  --transition-duration: 0.5s;
-
 }
 * {
   font-family: "Poppins", cursive;
@@ -28,6 +12,18 @@
 }
 body{
   background-color: var(--background-color);
+}
+summary::-webkit-details-marker {
+    display: none;
+}
+summary::before {
+    content: "▶";    /* Можно использовать любой символ или SVG-иконку */
+    font-size: 12px;
+    transition: transform 0.2s ease; /* Плавный поворот */
+    margin-right: auto; 
+}
+details[open] summary::before {
+    transform: rotate(90deg);
 }
 .error-snackBar {
   background-color: var(--color-text-error);
@@ -40,9 +36,14 @@ body{
   color: #030303;
   white-space: pre-wrap;
   max-width: 96vw !important;
+  font-family: Onest !important;
 }
 .mat-simple-snackbar-action {
   background-color:#242222;
   border-radius: 5px;
   color: #eee6e6;
+}
+.mat-mdc-button {
+    letter-spacing: unset !important;
+    font-family: Onest !important;
 }

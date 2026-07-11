@@ -1,83 +1,108 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import { ChangeDetectionStrategy,  Component} from '@angular/core';
-import { debounceTime, filter, Observable, of, Subscription, switchMap} from 'rxjs';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { debounceTime, filter, Observable, of, Subscription, switchMap } from 'rxjs';
 import { QuotesDataService, IRate } from '../../services/quotes-data.service';
 import { FormControl } from '@angular/forms';
-import { AppStorage, StorageService, StorageType } from 'src/app/services/storage.service';
-import { AuthService } from 'src/app/services/auth.service';
+import { AppStorage, StorageService, StorageType } from '../../services/storage.service';
+import { AuthService } from '../../services/auth.service';
 @Component({
-    selector: 'app-rt-quotes-table',
-    templateUrl: './rt-quotes-table.component.html',
-    styleUrls: ['./rt-quotes-table.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'app-rt-quotes-table',
+  templateUrl: './rt-quotes-table.component.html',
+  styleUrls: ['./rt-quotes-table.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class RTQuotesTableComponent {
-  public showPanels:boolean = true;
-  public filterQuotesList = new FormControl ('');
-  public savedFilters = []
+  public authService= inject(AuthService)
+  public quotesService = inject(QuotesDataService);
+  private storageService= inject(StorageService)
+  private appStorage: AppStorage = this.storageService.initStorageObj(StorageType.IndexDB);
+  public showPanels: boolean = true;
+  public filterQuotesList = new FormControl('');
+  public savedFilters: string[] = [];
   public cachedTime = 500;
-  public quotesData$ : Observable<IRate[]>; //Subsction to the quotes stream
-  public newFilter:Observable<boolean>;
-  private subsriptions = new Subscription ();
-  private appStorage:AppStorage;
-  constructor(
-    public quotesService: QuotesDataService,
-    private storageService:StorageService,
-    public authService:AuthService
-  ) {
-    this.appStorage = this.storageService.initStorageObj(StorageType.IndexDB)
-  }
+  public quotesData$!: Observable<IRate[]>; //Subsction to the quotes stream
+  public newFilter: Observable<boolean> | undefined = undefined;
+  private subsriptions = new Subscription();
+
   ngOnInit(): void {
-    this.subsriptions.add(this.appStorage.getStorageData('custom-filter').subscribe(filters=>{
-      this.savedFilters= (filters as {code:string,filter:string[]}).filter
-    }))
-    this.subsriptions.add(this.quotesService.connectionState$.asObservable().pipe(filter(st=>st==='connected')).subscribe(()=>{this.getQuotesStream(this.cachedTime)}));
+    this.subsriptions.add(
+      this.appStorage.getStorageData('custom-filter').subscribe((filters) => {
+        this.savedFilters = (filters as { code: string; filter: string[] }).filter;
+      }),
+    );
+    this.subsriptions.add(
+      this.quotesService.connectionState$
+        .pipe(filter((st) => st === 'connected'))
+        .subscribe(() => {
+          this.getQuotesStream(this.cachedTime);
+        }),
+    );
     this.newFilter = this.filterQuotesList.valueChanges.pipe(
       debounceTime(300),
-      switchMap((newFilter)=>of(!this.savedFilters.includes(newFilter.toLocaleUpperCase())))
-    )
+      switchMap((newFilter) => of(!this.savedFilters.includes(newFilter!.toLocaleUpperCase()))),
+    );
   }
   ngOnDestroy(): void {
     this.subsriptions.unsubscribe();
-
   }
   ngAfterViewInit(): void {
-    this.manageStream ()
+    this.manageStream();
   }
-  manageStream () {
-    this.quotesService.connectionState$.getValue()==='connected'? this.disconnectedFromStream() : this.quotesService.connectToWSServer()
+  manageStream() {
+    this.quotesService.connectionState === 'connected'
+      ? this.disconnectedFromStream()
+      : this.quotesService.connectToWSServer();
   }
-  resetCacheTime(caheInput:HTMLInputElement) {
-    this.getQuotesStream(this.cachedTime!==Number(caheInput.value)? Number(caheInput.value) : this.cachedTime )
+  resetCacheTime(caheInput: HTMLInputElement) {
+    this.getQuotesStream(this.cachedTime !== Number(caheInput.value) ? Number(caheInput.value) : this.cachedTime);
   }
-  getQuotesStream(cahceTime = 500) {//Subscribe to the stream of quotes and handle update of quotes array
-    this.quotesData$ = this.quotesService.tapToQuotesStream(cahceTime)
-      .pipe(
-        switchMap(data=> {
-          const filterArray = this.filterQuotesList.getRawValue().toLocaleLowerCase().split(',').map(el=>el.trim());
-          // return of( data.slice(1,51)) 
-          return of(filterArray[0].length>0? data.filter(row=>filterArray.includes(row.symbol.toLocaleLowerCase())) : data.slice(1,51)) 
-        })
-      );
+  getQuotesStream(cahceTime = 500) {
+    //Subscribe to the stream of quotes and handle update of quotes array
+    this.quotesData$ = this.quotesService.tapToQuotesStream(cahceTime).pipe(
+      switchMap((data) => {
+        const filterArray = this.filterQuotesList
+          ?.getRawValue()
+          ?.toLocaleLowerCase()
+          .split(',')
+          .map((el) => el.trim());
+        // return of( data.slice(1,51))
+        return of(
+          filterArray![0].length > 0
+            ? data.filter((row) => filterArray?.includes(row.symbol.toLocaleLowerCase()))
+            : data.slice(1, 51),
+        );
+      }),
+    );
   }
-  disconnectedFromStream() {// stop receiving quotes data
+  disconnectedFromStream() {
+    // stop receiving quotes data
     this.quotesService.disconnectFromServer();
   }
-  trackByfn(index: number, item: IRate) { //trackBy to avoid whole list rendering on update
+  trackByfn(index: number, item: IRate) {
+    //trackBy to avoid whole list rendering on update
     return item.symbol + item.time; // quote has to be updated in the view if for given symbol changed time stamp
   }
-  saveFilter(newFilter:string) { //Saving user custom filter in indexDBB
+  saveFilter(newFilter: string) {
+    //Saving user custom filter in indexDBB
     this.savedFilters.push(newFilter.toLocaleUpperCase());
-    this.subsriptions.add(this.appStorage.setStorageData('filterList',{code:'custom-filter',filter:this.savedFilters}).subscribe());
+    this.subsriptions.add(
+      this.appStorage.setStorageData('filterList', { code: 'custom-filter', filter: this.savedFilters }).subscribe(),
+    );
     this.filterQuotesList.updateValueAndValidity();
   }
-  deleteFilter(event:MouseEvent, oldFilter:string) { //Deleting user custom filter from indexDBB
-    event.stopPropagation();//prevent closing of autocomplete list
-    this.savedFilters.splice(this.savedFilters.findIndex(el=>el === oldFilter),1);
-    this.subsriptions.add(this.appStorage.setStorageData('filterList',{code:'custom-filter',filter:this.savedFilters}).subscribe());
+  deleteFilter(event: MouseEvent, oldFilter: string) {
+    //Deleting user custom filter from indexDBB
+    event.stopPropagation(); //prevent closing of autocomplete list
+    this.savedFilters.splice(
+      this.savedFilters.findIndex((el) => el === oldFilter),
+      1,
+    );
+    this.subsriptions.add(
+      this.appStorage.setStorageData('filterList', { code: 'custom-filter', filter: this.savedFilters }).subscribe(),
+    );
   }
-  logOut(){
-    this.authService.logOut(this.authService.userData.getValue().userId)
+  logOut() {
+    this.authService.logOut(this.authService.userData.getValue().userId);
   }
 }

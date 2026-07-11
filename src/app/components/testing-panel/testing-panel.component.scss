@@ -1,122 +1,68 @@
+@use '../../../styles/mixins/media.mixin.scss' as *;
+@use '../../../styles/mixins/mat-fields.mixin.scss' as formsmixins;
+@use '../../../styles/mixins/nds-mixins.scss' as nds;
+@use '../../../styles/variables.scss' as glob;
 
-@use '../../../styles/mixins_media.scss' as *;
+@include formsmixins.ng-deep-form-field-contrast-styles;
+@include nds.nds-buttons;
+
 .mat-button-disabled {
-  background-color: red !important
+  background-color: glob.$base---warning--accent !important;
 }
 main {
-  background-color:var(--background-color);
   width: var(--contentWidth);
 
   @include desktop {
-    --contentWidth:60vw;
+    --contentWidth: 60vw;
   }
 
   @include tablet {
-    --contentWidth:80vw;
+    --contentWidth: 80vw;
   }
 
   @include mobile {
-    --contentWidth:96vw;
+    --contentWidth: 96vw;
   }
+
   .mng-panel {
-    border-bottom: 2px groove rgb(229, 226, 226);
     padding: 5px;
-   
     &__header {
-      border: 2px groove rgb(229, 226, 226);
-      min-height: 4vh !important;
+      display: flex;
+      gap: 12px;
+      align-items: center;
       cursor: pointer;
-      padding-left: 5px ;
-      border-radius: 10px;
-      color: var(--color-text-header);
+      padding: 6px;
+      padding-left: 10px;
+
+      border: 1px groove glob.$line---panel;
+      border-radius: glob.$corner-radius--l;
+      //padding-left: 12px;
+      color: glob.$text---primary;
+
       @include mobile {
-        font-size:14px !important;
+        font-size: 14px !important;
       }
-      &__status.Connected {
+      &__status {
+        width: 100%;
+        pointer-events: none; /* Чтобы клик сквозь текст открывал спойлер */
+      }
+      &__status_state.Connected {
         color: #0072ff;
       }
     }
     form {
-      display:flex;
+      //display:flex;
       justify-content: space-between;
-      margin-top: 2vh;
+      margin-top: 1vh;
+      margin-bottom: 1vh;
 
       @include mobile {
-        display:grid;
+        display: grid;
       }
-      
-      .form__button-stream {
-        transition: var(--transition-duration);
-        background-size: 200% auto;
-        color: var(--color-text-light);            
-        box-shadow: 0 0 20px var(--color-text-light);
-        border-radius: var(--border-radius-large);
-        height: 5vh;
-        min-width: 200px;
-        max-height: 50px;
-        width: 16vw;
-        
-        @include tablet {
-          max-height: 50px;
-          height: 5vh;
-          min-height: 40px;
-        }
-  
-        @include mobile {
-          min-width: 280px;
-          height: 5vh;
-          min-height: 30px;
-          line-height: 28px;
-          margin-bottom: 1vh;
-        }
-  
-        &.start-stream:disabled {
-          filter: opacity(40%);
-
-        }
-        &.start-stream {
-          background-image: linear-gradient(to right, #00c6ff 0%, #0072ff  51%, #00c6ff  100%);
-        }
-  
-        &.stop-stream {
-          background-image: linear-gradient(to right, #517fa4 0%, #243949  51%, #517fa4  100%);
-        }
-  
-        &-text::after {
-          position: relative;
-          content: '';
-          width: 0px;
-          height: 2px;
-          display: block;
-          background: var(--color-text-light);
-          transition: var(--transition-duration);
-          top: -2px;
-          left: 50%;
-          translate: -50%;
-        }
-        
-        &-text:hover::after {
-          width: 70%;
-        }
+      .form__parameters {
+        display: flex;
+        gap: 12px;
       }
-      .mat-form-field {
-        width: 7vw;
-        margin-right: 1vw;
-  
-        @include desktop {
-          width: 11vw;
-        }
-  
-        @include tablet {
-          width: 13vw;
-        }
-  
-        @include mobile {
-          width: 28vw;
-          margin-right: 2vw;
-        }
-      }
-  
     }
   }
 }
