@@ -112,7 +112,14 @@ RTQ - FrontEnd
 8. Guard protect for connectToWSServer. Prevent duplicating streams and memory leaks.
 9. wssDisconnect refactored and resetServiceState added to correctly reset state before manual reconnect or unretryed error
 
+17/07/26
+1. Implemented UI heartbeat ping to keep client connection alive when there is no stream from the server
+
 ToDo:
+6. Decompose the quote service by business context (connection, streaming, watchdog). 
+  -Infa layer - wss connect and disconnect
+  -business layer - streaming/domain
+  -infa untils: watchdog and ui heartbeat ping 
 3. Refactor TestingMngService in accordance with QuotesDataService: reconnecting handler and so on
 4. Config json to implement
 5. Storage service - error handling and refactor

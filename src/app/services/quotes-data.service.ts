@@ -12,16 +12,10 @@ import {
   startWith,
   distinctUntilChanged,
   bufferTime,
+  tap,
+  ignoreElements,
 } from 'rxjs/operators';
-import {
-  BehaviorSubject,
-  EMPTY,
-  MonoTypeOperatorFunction,
-  Observable,
-  of,
-  Subject,
-  timer,
-} from 'rxjs';
+import { BehaviorSubject, EMPTY, merge, MonoTypeOperatorFunction, Observable, of, Subject, timer } from 'rxjs';
 import { SnacksService } from './snacks.service';
 import { TConnectionStatus } from '../types/shared-models';
 import { IErrorHandler, SERVER_ERRORS } from '../types/errors-model';
@@ -38,7 +32,7 @@ export interface IRate {
   chgAsk: number;
   chgUpDown: number;
 }
-export type TwsServerResponse = IRate[] | { message: string } | { cmd: 'close' };
+export type TwsServerResponse = IRate[] | { message: string } | { cmd: 'close' | 'ping' };
 @Injectable({
   providedIn: 'root',
 })
@@ -96,9 +90,25 @@ export class QuotesDataService {
         },
       },
     });
+    const reconnectingSocket$ = this.wsServer$.pipe(
+      this.handleReconnecting()
+    )
+    //ui heartbeat ping
+    const uiPing$ = timer(ENV.PING_HEARTBEAT_INTERVAL, ENV.PING_HEARTBEAT_INTERVAL).pipe(
+      tap(() => {
+        if (this.wsServer$ && this.wsServer$.closed === false) {
+          this.wsServer$.next({ cmd: 'ping' });
+        }
+      }),
+      ignoreElements(),
+    );
     //core source stream
-    const sharedWssStream$ = this.wsServer$.pipe(this.handleReconnecting(), takeUntil(this.destroyStreams$), share());
+    const sharedWssStream$ = merge(reconnectingSocket$, uiPing$).pipe(
+      takeUntil(this.destroyStreams$),
+      share(),
+    );
     this.createWssSystemStream(sharedWssStream$);
+
     //source stream for quotes stream and watchdog
     const rawQuoteStream$ = sharedWssStream$.pipe(
       filter((data) => 'message' in Object(data) === false),
@@ -121,6 +131,7 @@ export class QuotesDataService {
   }
   private handleReconnecting<T>(): MonoTypeOperatorFunction<T> {
     const retryDelay = () => {
+      console.log('handleReconnecting', )
       this.retryAttemptNum++;
       const errorCode = this.closeConnectionErrorCode || 503;
       const error = SERVER_ERRORS.get(errorCode)!;
