@@ -23,7 +23,7 @@ export class RTQuotesTableComponent {
   public showPanels: boolean = true;
   public filterQuotesList = new FormControl('');
   public savedFilters: string[] = [];
-  public cachedTime = 500;
+  public bufferdTime = 500;
   public quotesData$!: Observable<IRate[]>; //Subsction to the quotes stream
   public newFilter: Observable<boolean> | undefined = undefined;
 
@@ -36,7 +36,7 @@ export class RTQuotesTableComponent {
     );
     this.subsriptions.add(
       this.quotesService.connectionState$.pipe(filter((st) => st === 'connected')).subscribe((st) => {
-        this.getQuotesStream(this.cachedTime);
+        this.getQuotesStream();
       }),
     );
     this.newFilter = this.filterQuotesList.valueChanges.pipe(
@@ -53,14 +53,15 @@ export class RTQuotesTableComponent {
   manageStream() {
     this.quotesService.connectionState === 'connected'
       ? this.disconnectedFromStream()
-      : this.quotesService.connectToWSServer();
+      : this.quotesService.connectToWSServer(this.bufferdTime);
   }
-  resetCacheTime(caheInput: HTMLInputElement) {
-    this.getQuotesStream(this.cachedTime !== Number(caheInput.value) ? Number(caheInput.value) : this.cachedTime);
+  resetBufferTime(bufferInput: HTMLInputElement) {
+    const bufferTime = this.bufferdTime !== Number(bufferInput.value) ? Number(bufferInput.value) : this.bufferdTime
+    this.quotesService.resetBufferTime(bufferTime)
   }
-  getQuotesStream(cahceTime = 500) {
+  getQuotesStream() {
     //Subscribe to the stream of quotes and handle update of quotes array
-    this.quotesData$ = this.quotesService.quotesStream$(cahceTime).pipe(
+    this.quotesData$ = this.quotesService.quotesData$.pipe(
       switchMap((data) => {
         const filterArray = this.filterQuotesList
           ?.getRawValue()

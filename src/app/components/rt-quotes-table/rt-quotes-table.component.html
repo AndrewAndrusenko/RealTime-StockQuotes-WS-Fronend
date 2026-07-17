@@ -96,16 +96,16 @@
             }}
           </span>
         </button>
-        <span class="connection-panel__cache">
+        <span class="connection-panel__buffer">
           <label
-            for="cache"
-            class="connection-panel__cache-label"
+            for="buffer"
+            class="connection-panel__buffer-label"
           >
-            Cache Time:
+            Buffer Time:
           </label>
           <mat-slider
             #slider
-            class="connection-panel__cache-slider"
+            class="connection-panel__buffer-slider"
             min="50"
             max="5000"
             step="100"
@@ -113,19 +113,19 @@
           >
             <input
               matSliderThumb
-              [(ngModel)]="cachedTime"
+              [(ngModel)]="bufferdTime"
             />
           </mat-slider>
           <input
-            id="cache"
-            #cacheInput
-            class="connection-panel__cache-input"
-            [(ngModel)]="cachedTime"
-            matTooltip="Time to cache the stream in milliseconds"
+            id="buffer"
+            #bufferInput
+            class="connection-panel__buffer-input"
+            [(ngModel)]="bufferdTime"
+            matTooltip="Time to buffer the stream in milliseconds"
           />
           <button
             class="button-icon size-m outline-button"
-            (click)="resetCacheTime(cacheInput)"
+            (click)="resetBufferTime(bufferInput)"
           >
             <mat-icon
               class="connection-panel__button-icon reset-connection"

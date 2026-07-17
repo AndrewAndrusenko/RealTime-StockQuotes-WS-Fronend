@@ -1,17 +1,27 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { inject, Injectable } from '@angular/core';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import {
-  throttleTime,
   switchMap,
   filter,
-  timeout,
-  catchError,
   repeat,
   delay,
   retry,
+  takeUntil,
+  share,
+  map,
+  startWith,
+  distinctUntilChanged,
+  bufferTime,
 } from 'rxjs/operators';
-import { BehaviorSubject, EMPTY, MonoTypeOperatorFunction, Observable, of, throwError } from 'rxjs';
+import {
+  BehaviorSubject,
+  EMPTY,
+  MonoTypeOperatorFunction,
+  Observable,
+  of,
+  Subject,
+  timer,
+} from 'rxjs';
 import { SnacksService } from './snacks.service';
 import { TConnectionStatus } from '../types/shared-models';
 import { IErrorHandler, SERVER_ERRORS } from '../types/errors-model';
@@ -28,6 +38,7 @@ export interface IRate {
   chgAsk: number;
   chgUpDown: number;
 }
+export type TwsServerResponse = IRate[] | { message: string } | { cmd: 'close' };
 @Injectable({
   providedIn: 'root',
 })
@@ -35,25 +46,49 @@ export class QuotesDataService {
   //Service to handle data
   private readonly snacksService = inject(SnacksService);
   private readonly jwtService = inject(JwtHandlerService);
-  private wsServer$: WebSocketSubject<IRate[] | { message: string } | { cmd: 'close' }> | undefined = undefined;
-  private readonly _connectionState$ = new BehaviorSubject<TConnectionStatus>('disconnected'); //Connection status for UI
-  //Connection status for UI
+
+  private wsServer$: WebSocketSubject<TwsServerResponse> | undefined = undefined;
+  //WSS Connection status for UI
+  private readonly _connectionState$ = new BehaviorSubject<TConnectionStatus>('disconnected');
+  public readonly connectionState$ = this._connectionState$.asObservable();
+  //Stream status for UI
+  private readonly _streamActive$ = new BehaviorSubject<boolean>(false);
+  public readonly streamActive$ = this._streamActive$.asObservable();
+  //Reconnecting data
   private readonly _connectionRepeat$ = new BehaviorSubject<{ current: number; total: number } | null>(null);
-  private readonly _streamActive$ = new BehaviorSubject<boolean>(false); //Stream status for UI
-  private quotesDataArray: IRate[] = []; // Quotes array to be displayed in the template
+  public readonly connectionRepeat$ = this._connectionRepeat$.asObservable();
+  //Quotes data stream
+  private readonly _quotesData$ = new BehaviorSubject<IRate[]>([]);
+  public readonly quotesData$ = this._quotesData$.asObservable();
+  //buffer time for quotes data stream
+  private readonly _quotesBufferTime$ = new BehaviorSubject<number>(500);
+  public readonly quotesBufferTime$ = this._quotesBufferTime$.asObservable();
+
   private closeConnectionErrorCode: number | null = null;
   private conecctionRetryCount: number = 2;
-  private connectionAttemptN: number = 0;
+  private retryAttemptNum: number = 0;
 
-  public connectToWSServer(endpoint = ENV.TEST_WS_ENDPOINT) {
+  private readonly destroyStreams$ = new Subject<void>();
+  private quotesDataMap = new Map<string, IRate>();
+
+  get connectionState() {
+    return this._connectionState$.value;
+  }
+
+  public connectToWSServer(bufferPeriod = 500, endpoint = ENV.TEST_WS_ENDPOINT) {
+    const currentConnectionState = this._connectionState$.value;
+    if (currentConnectionState !== 'disconnected') {
+      console.warn(
+        `connectToWSServer: Creating new connection was blocked. Current connection state is ${currentConnectionState}`,
+      );
+      return;
+    }
+    this._quotesBufferTime$.next(bufferPeriod);
     this._connectionState$.next('Connecting');
+    this.destroyStreams$.next();
+
     this.wsServer$ = webSocket({
       url: endpoint + '/front',
-/*       openObserver: {
-        next: () => {
-          console.log('openObserver webSocket');
-        },
-      }, */
       closeObserver: {
         next: (event) => {
           this.closeConnectionErrorCode = this.closeConnectionErrorCode || event.code;
@@ -61,50 +96,41 @@ export class QuotesDataService {
         },
       },
     });
-
-    this.wsServer$
-      .pipe(
-        this.handleReconnecting(),
-        filter((data) => 'message' in Object(data)),
-      )
-      .subscribe({
-        complete: () => {
-          this._connectionState$.next('disconnected');
-          this._streamActive$.next(false);
-        },
-        next: (msg) => {
-          switch ((msg as { message: string }).message) {
-            case 'connected':
-              this._connectionState$.next('connected');
-              this.closeConnectionErrorCode = null;
-              this.connectionAttemptN = 0;
-              break;
-            case 'stream_started':
-              this._streamActive$.next(true);
-              this.quotesDataArray = [];
-              break;
-            case 'stream_stopped':
-              this._streamActive$.next(false);
-              break;
-            default:
-              console.log('ws server message:', msg);
-          }
-        },
-      });
+    //core source stream
+    const sharedWssStream$ = this.wsServer$.pipe(this.handleReconnecting(), takeUntil(this.destroyStreams$), share());
+    this.createWssSystemStream(sharedWssStream$);
+    //source stream for quotes stream and watchdog
+    const rawQuoteStream$ = sharedWssStream$.pipe(
+      filter((data) => 'message' in Object(data) === false),
+      map((data) => data as IRate[]),
+    );
+    this.createWatchDogStream(rawQuoteStream$);
+    this.createQuoteStream(rawQuoteStream$);
   }
 
+  public disconnectFromServer() {
+    this.destroyStreams$.next();
+    if (this.wsServer$) {
+      this.wsServer$.complete();
+      this.wsServer$ = undefined;
+    }
+    this.resetServiceState();
+  }
+  public resetBufferTime(bufferPeriod: number) {
+    this._quotesBufferTime$.next(bufferPeriod);
+  }
   private handleReconnecting<T>(): MonoTypeOperatorFunction<T> {
-    const retryDelay = () =>{
-      this.connectionAttemptN++;
-      const errorCode = this.closeConnectionErrorCode || 503
+    const retryDelay = () => {
+      this.retryAttemptNum++;
+      const errorCode = this.closeConnectionErrorCode || 503;
       const error = SERVER_ERRORS.get(errorCode)!;
 
       // Max attempts reached block or no retry
-      if ((error?.retryConnection === false) || (this.conecctionRetryCount + 1 === this.connectionAttemptN)) {
-        this.wssDisconnect(error,errorCode)
+      if (error?.retryConnection === false || this.conecctionRetryCount + 1 === this.retryAttemptNum) {
+        this.wssDisconnect(error, errorCode);
         return EMPTY;
       }
-      
+
       //JWT has been expired
       if (error?.authErr) {
         return this.jwtService.refreshTokenAndWait$().pipe(
@@ -120,117 +146,124 @@ export class QuotesDataService {
           }),
         );
       }
-  
+
       //Error requires reconnection
       if (error?.retryConnection) {
-        const exponentDelay = Math.pow(2, this.connectionAttemptN) * ENV.RETRY_INTERVAL;
-        const jitterRate = 0.7 + Math.random() * 0.6; 
+        const exponentDelay = Math.pow(2, this.retryAttemptNum) * ENV.RETRY_INTERVAL;
+        const jitterRate = 0.7 + Math.random() * 0.6;
         const finalDelay = Math.round(exponentDelay * jitterRate);
         this.reconnectNotify();
         return of(1).pipe(delay(finalDelay));
       }
-      console.warn(`QuotesDataService has been unable to handle error:${errorCode}`)
-      this.wssDisconnect(error,errorCode);
-      return EMPTY
-    }
-    return (source$) => source$.pipe(
-      repeat({delay:retryDelay}), // reconnect when source completes 
-      retry({delay:retryDelay}), // reconnect when there is an error in the source
-/*    catchError(()=>{ // reconnect when there is an error in the source (old recurrsive)
-        return retryDelay().pipe(
-          switchMap(()=>source$.pipe(this.handleReconnecting()))
-        )
-      }) */
-    )
+      console.warn(`QuotesDataService has been unable to handle error:${errorCode}`);
+      this.wssDisconnect(error, errorCode);
+      return EMPTY;
+    };
+    return (source$) =>
+      source$.pipe(
+        repeat({ delay: retryDelay }), // reconnect when source completes
+        retry({ delay: retryDelay }), // reconnect when there is an error in the source
+      );
   }
 
   private reconnectNotify() {
-    this._connectionRepeat$.next({ current: this.connectionAttemptN, total: this.conecctionRetryCount });
+    this._connectionRepeat$.next({ current: this.retryAttemptNum, total: this.conecctionRetryCount });
     console.log(
-      `QuotesDataService: Trying to reconnect due to error ${this.closeConnectionErrorCode}. Attempt ${this.connectionAttemptN} out of ${this.conecctionRetryCount}`,
+      `QuotesDataService: Trying to reconnect due to error ${this.closeConnectionErrorCode}. Attempt ${this.retryAttemptNum} out of ${this.conecctionRetryCount}`,
     );
     this._connectionState$.next('Reconnecting');
     this.closeConnectionErrorCode = null;
   }
 
-  private wssDisconnect(error:IErrorHandler, errorCode:number) {
-    if (error?.errmsgIgnore === false) {
-      let message = error?.messageToUI || 'Unknown connection error'
-      this.snacksService.openSnack(`Error code:${errorCode}. ${message} `,'Okay','error-snackBar');
-    }
-    this.closeConnectionErrorCode = null;
-    this.connectionAttemptN = 0;
-    this._connectionRepeat$.next(null);
-    this.wsServer$?.closed ? null : this.wsServer$?.unsubscribe();
-    this._connectionState$.next('disconnected');
+  private createWssSystemStream(sharedWssStream$: Observable<TwsServerResponse>): void {
+    sharedWssStream$
+      .pipe(
+        filter((data) => 'message' in Object(data)),
+        takeUntil(this.destroyStreams$),
+      )
+      .subscribe({
+        complete: () => {
+          this.resetServiceState();
+        },
+        next: (msg) => {
+          switch ((msg as { message: string }).message) {
+            case 'connected':
+              this._connectionState$.next('connected');
+              this.closeConnectionErrorCode = null;
+              this.retryAttemptNum = 0;
+              break;
+            case 'stream_started':
+              this._streamActive$.next(true);
+              this.quotesDataMap.clear();
+              //this.quotesDataArray = [];
+              break;
+            case 'stream_stopped':
+              this._streamActive$.next(false);
+              break;
+            default:
+              console.log('ws server message:', msg);
+          }
+        },
+      });
   }
-  
-  public quotesStream$(cachingTime = 500): Observable<IRate[]> {
-    let bufferRates: IRate[] = [];
-    return of(!this.wsServer$ || this.wsServer$.closed).pipe(
-      switchMap(() =>
-        this.wsServer$!.pipe(
-          filter((data) => !('message' in Object(data))),
-          //timeout({ each: ENV.STREAM_TIMEOUT }),
-          switchMap((newSet) => {
-            const newSetSymbols = (newSet as IRate[]).map((newRate) => newRate.symbol);
-            return of(
-              (bufferRates = (newSet as IRate[]).concat(
-                bufferRates.filter((oldRate) => !newSetSymbols.includes(oldRate.symbol)),
-              )),
-            );
-          }),
-          throttleTime(cachingTime),
-          switchMap((newSetFull) => {
-            bufferRates = [];
-            newSetFull.length && !this._streamActive$.value ? this._streamActive$.next(true) : null;
-            newSetFull.forEach((newRate) => {
-              const index = this.quotesDataArray.findIndex((rateRow) => rateRow.symbol === newRate.symbol);
-              index > -1 ? (this.quotesDataArray[index] = newRate) : this.quotesDataArray.push(newRate);
-            });
-            return of(this.quotesDataArray);
-          }),
-          catchError((err) => {
-            console.error('error quotesStream$', err);
-            this._streamActive$.next(false);
-            let errMsg = 'Server error';
-            switch (err.name) {
-              case 'TimeoutError':
-                errMsg = `Warning: There has been no new quote for ${ENV.STREAM_TIMEOUT / 1000} sec...`;
-                //this.disconnectFromServer(); //??
-                break;
-            }
-            this.wsServer$?.closed === false && this._connectionState$.getValue() !== 'Reconnecting'
-              ? this.snacksService.openSnack(errMsg, 'Okay', 'error-snackBar')
-              : null;
-            //return of([]); //??
-            return of(this.quotesDataArray)
-          }),
+
+  private createWatchDogStream(rawQuoteStream$: Observable<IRate[]>): void {
+    rawQuoteStream$
+      .pipe(
+        switchMap(() =>
+          timer(ENV.STREAM_TIMEOUT).pipe(
+            map(() => false), //stream is dead,
+            startWith(true), // stream is up
+          ),
         ),
-      ),
-    );
+        distinctUntilChanged(),
+        takeUntil(this.destroyStreams$),
+      )
+      .subscribe((isActive) => {
+        this._streamActive$.value !== isActive ? this._streamActive$.next(isActive) : null;
+        if (isActive === false) {
+          const errMsg = `Warning: There has been no new quote for ${ENV.STREAM_TIMEOUT / 1000} sec...`;
+          this.snacksService.openSnack(errMsg, 'Okay', 'error-snackBar');
+        } else {
+          this.snacksService.openSnack('Stream is up and runnig', 'Okay', 'success-snackBar');
+        }
+      });
   }
 
-  public disconnectFromServer() {
-    if (!this.wsServer$) {
-      return;
-    }
-    if (this.wsServer$.closed === false) {
-      this._connectionState$.next('Disconnecting');
-      this.wsServer$.next({ cmd: 'close' });
-    }
+  private createQuoteStream(rawQuoteStream$: Observable<IRate[]>): void {
+    this._quotesBufferTime$
+      .pipe(
+        switchMap((bufferPeriod) => {
+          return rawQuoteStream$.pipe(
+            bufferTime(bufferPeriod),
+            filter((buffer) => buffer.length > 0),
+            map((bufferArrays) => {
+              const flatBuffer = bufferArrays.flat();
+              flatBuffer.forEach((rate) => this.quotesDataMap.set(rate.symbol, rate));
+              return Array.from(this.quotesDataMap.values());
+            }),
+          );
+        }),
+        takeUntil(this.destroyStreams$),
+      )
+      .subscribe((quotesArray) => this._quotesData$.next(quotesArray));
   }
 
-  get connectionState() {
-    return this._connectionState$.value;
+  private wssDisconnect(error: IErrorHandler, errorCode: number) {
+    if (error?.errmsgIgnore === false) {
+      let message = error?.messageToUI || 'Unknown connection error';
+      this.snacksService.openSnack(`Error code:${errorCode}. ${message} `, 'Okay', 'error-snackBar');
+    }
+    this.resetServiceState();
   }
-  get connectionState$() {
-    return this._connectionState$.asObservable();
-  }
-  get connectionRepeat$() {
-    return this._connectionRepeat$.asObservable();
-  }
-  get streamActive$() {
-    return this._streamActive$.asObservable();
+
+  private resetServiceState() {
+    this._connectionState$.next('disconnected');
+    this._streamActive$.next(false);
+    this._connectionRepeat$.next(null);
+    this._quotesData$.next([]);
+    this.quotesDataMap.clear();
+    this.retryAttemptNum = 0;
+    this.closeConnectionErrorCode = null;
   }
 }

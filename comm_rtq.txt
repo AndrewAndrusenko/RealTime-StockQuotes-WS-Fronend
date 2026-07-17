@@ -94,9 +94,25 @@ Since user was authenticated in dedeicated service with differennt subdomain
 8. Storage service - delete method has been added. Service is to be refactored
 9. Error without code (when ws server is down from the start) is treated as 503 error with reconnecting
 
+15-16/07/26
+RTQ - FrontEnd
+1. Deep streams refactor. Implemented core shared wss stream sharedWssStream$ handling basic and reconnect logic.
+2.1 Separate stream to handle ws server system messages was created based on core sharedWssStream$. method createWssSystemStream()
+2.2 Separate wathcdog stream to monitor breaks in quotes stream was created based on core sharedWssStream$. method createWatchDogStream()
+2.3 New refactored quotes stream was created based on core sharedWssStream$. method createQuoteStream()
+3. Main quote stream refactor:
+  - bufferTime operator implemented instead of throttleTime to eliminate overhead of manual buffer handling. bufferTime creates array of rates arrays received from the server. then array flattened
+  - Map instead of Array. rates accumulate in Map and use set to update insted of findIndex and push. Such pattern allows to reduce complexity form O(N) to O(1)
+  - Main quotes source (quotesDataMap) updated from the buffer array using set operator. By such means the old quotes will be rewrited, new added. Since order of buffer remains (for one symbol the last rates will be in the bottom and will be handled at the end) only last rate will end up in the final main quotes source (quotesDataMap)
+  - buffer period update. implemented pattern BehaviourSubject => pipe + switchMap (when new buffer period arrives from UI, current stream will be properly closed and tore down. New stream with new buffer period will be created insted)
+4. public method disconnectFromServer was fixed. Incorrect pattern with unsubscribe which could lead to memory leaks changed to the safe one with complete. tear down all connnected subscriptions with taktakeUntil trigger and correctly reset service state
+5. Buffer period updating has been optimized. Implemented BehaviourSubject responsible for tracking buffer period update. Main
+6. Add destroyStreams$ trigger to implement taktakeUntil() to all subscriptions and prevent any memory leaks.
+7. refactor: encapsulate streams using subject hiding pattern and removing getters. this prevents creating a new observable on every property access.
+8. Guard protect for connectToWSServer. Prevent duplicating streams and memory leaks.
+9. wssDisconnect refactored and resetServiceState added to correctly reset state before manual reconnect or unretryed error
+
 ToDo:
-1. Separate stream watching for delay in quotes stream in order to notify UI
-2. Refactor QuotesDataService => quotesStream by eliminating quote array mutation and implement immutable array by using scan and buffer
 3. Refactor TestingMngService in accordance with QuotesDataService: reconnecting handler and so on
 4. Config json to implement
 5. Storage service - error handling and refactor
