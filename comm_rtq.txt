@@ -117,11 +117,16 @@ RTQ - FrontEnd
 17/07/26 - 2
 1. Network latency monitor has been implemented and added to UI. Latency is being smoothed by ema
 
+19/07/26
+1 Storage service fixed and refactored. 
+  Strict class typing via interface implemention. 
+  Correct error handling and passing errors down pipe 
+  Fixed - verification of operation success
 ToDo:
 6. Decompose the quote service by business context (connection, streaming, watchdog). 
   -Infa layer - wss connect and disconnect
   -business layer - streaming/domain
   -infa untils: watchdog and ui heartbeat ping 
 3. Refactor TestingMngService in accordance with QuotesDataService: reconnecting handler and so on
-4. Config json to implement
+4. Config json to implement. паттерн  Runtime Configuration (конфигурация во время выполнения)
 5. Storage service - error handling and refactor

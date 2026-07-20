@@ -1,46 +1,60 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { inject, Injectable } from '@angular/core';
 import { NgxIndexedDBService } from 'ngx-indexed-db';
-import { catchError, filter, map, Observable, of, tap } from 'rxjs';
+import { catchError, map, Observable, of, throwError } from 'rxjs';
 import { CookieService } from 'ngx-cookie-service';
 import { IndexDBConfig } from '../app.module';
 export enum StorageType {
   Cookie,
   IndexDB,
 }
-class Strategy {
-  getData(key: string) {}
-  setData<T>(key: string, data: T) {}
-  deleteData(key: string) {}
+interface StorageStrategy {
+  getData<T>(key: string):Observable<T>,
+  setData<T>(key: string, data: T):Observable<T>,
+  deleteData(key: string):Observable<boolean>
 }
-class StrategyCookie extends Strategy {
-  constructor(private cookiesService: CookieService) {
-    super();
-  }
-  override getData<T>(key: string): Observable<T | Error> {
-    let result: T | Error;
+class StrategyCookie implements StorageStrategy {
+  constructor(private cookiesService: CookieService) {}
+  getData<T>(key: string): Observable<T> {
     try {
-      result = JSON.parse(this.cookiesService.get(key));
+      const cookieData = JSON.parse(this.cookiesService.get(key));
+      if (!cookieData) {
+        throw new Error (`Cookie with key: ${key} has not been found` )
+      }
+      const res = JSON.parse(cookieData) as T
+      return of(res)
     } catch (error) {
-      console.log('err', error);
-      result = error as Error;
+      console.log('Cookie get error', error);
+      return throwError(() => error instanceof Error? error : new Error(String(error)))
     }
-    return of<T | Error>(result as T | Error).pipe(filter((data) => !(data instanceof Error)));
   }
-  override setData<T>(key: string, data: T): Observable<T | Error> {
-    this.cookiesService.set(key, JSON.stringify(data));
-    return this.cookiesService.get(key) === JSON.stringify(data) ? of(data) : of(new Error('Error saving cookies'));
+  setData<T>(key: string, data: T): Observable<T> {
+    const stringifiedData = JSON.stringify(data)
+    try {
+      this.cookiesService.set(key,stringifiedData);
+      if (this.cookiesService.get(key) === stringifiedData) {
+        return of(data)
+      }
+      return throwError(()=>new Error('Error saving cookie: stringified data does not match'))
+    } catch (error) {
+      return throwError(()=>error)
+    }
   }
-  override deleteData<T>(key: string): Observable<boolean | Error> {
-    this.cookiesService.delete(key);
-    return !!this.cookiesService.get(key)? of(true) : of(new Error('Error deleting cookie'));
+  deleteData(key: string): Observable<boolean> {
+    try {
+      this.cookiesService.delete(key);
+      if (!this.cookiesService.get((key))) {
+        of(true)
+      }
+      return throwError(()=>new Error('Error deleting cookie: Cookie still exists'))
+    } catch (error) {
+      return throwError(()=>error)
+    }
   }
 }
-class StrategyIndexDB extends Strategy {
-  constructor(private indexDBservice: NgxIndexedDBService) {
-    super();
-  }
-  override getData<T>(key: string): Observable<T> {
+class StrategyIndexDB implements StorageStrategy {
+  constructor(private indexDBservice: NgxIndexedDBService) {}
+  getData<T>(key: string): Observable<T> {
     return this.indexDBservice
       .getByIndex<T>(
         IndexDBConfig.objectStoresMeta[0].store,
@@ -48,44 +62,40 @@ class StrategyIndexDB extends Strategy {
         key,
       )
       .pipe(
-        //tap(d=>console.log('d',d )),
-        //filter((data) => data !== undefined),
         catchError((err) => {
           console.log('er', err);
           return of(err);
         }),
       );
   }
-  override setData<T>(key: string, data: T): Observable<T | Error> {
-    return this.indexDBservice.update<T | Error>(IndexDBConfig.objectStoresMeta[0].store, data).pipe(
-      catchError((err) => {
-        console.log('er', err);
-        return of(err);
+  setData<T>(key: string, data: T): Observable<T> {
+    return this.indexDBservice.update<T>(IndexDBConfig.objectStoresMeta[0].store, data).pipe(
+      catchError(error => {
+        console.log(`IndexDB writing error for key ${key}:`, error)
+        return throwError(()=>error)
       }),
     );
   }
-  override deleteData<T>(key: string): Observable<boolean | Error> {
+  deleteData(key: string): Observable<boolean> {
     return this.indexDBservice.deleteByKey(IndexDBConfig.objectStoresMeta[0].store,key).pipe(
       map(()=>true),
-      catchError((err) => {
-        console.log('er', err);
-        return of(err);
+      catchError((error) => {
+        console.log(`IndexDB delete error for key ${key}:`, error);
+        return throwError(()=>error);
       }),
     );
   }
 }
 export class AppStorage {
-  constructor(private strategy: StrategyIndexDB | StrategyCookie) {
-    this.strategy = strategy;
-  }
-  getStorageData<T>(key: string): Observable<T | Error> {
-    return this.strategy.getData<T | Error>(key).pipe(
+  constructor(private strategy: StorageStrategy) {}
+  getStorageData<T>(key: string): Observable<T> {
+    return this.strategy.getData<T>(key).pipe(
     );
   }
-  setStorageData<T>(key: string, data: T): Observable<T | Error> {
+  setStorageData<T>(key: string, data: T): Observable<T> {
     return this.strategy.setData(key, data);
   }
-  deleteStorageData<T>(key: string): Observable<boolean | Error> {
+  deleteStorageData(key: string): Observable<boolean> {
     return this.strategy.deleteData(key);
   }
 }
