@@ -1,11 +1,12 @@
 /* You can add global styles to this file, and also import other style files */
 
+@use '../src/styles/variables.scss' as glob;
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 :root {
   --contentWidth :44vw;
 }
 * {
-  font-family: "Poppins", cursive;
+  font-family: "Onest";
   font-weight: 400;
   font-style: normal;
 
@@ -25,27 +26,36 @@ summary::before {
 details[open] summary::before {
     transform: rotate(90deg);
 }
+.mat-mdc-snackbar-surface {
+  color: unset !important;
+  background-color: unset !important;
+}
 .error-snackBar {
-  background-color: var(--color-text-error);
-  color: #030303;
+  background-color: glob.$base---warning--accent !important;
+  color: glob.$base---light !important;
   white-space: pre-wrap;
   max-width: 96vw !important;
   font-family: Onest !important;
+  border-radius: glob.$corner-radius--m !important;
 }
 .success-snackBar {
-  background-color:  #2196f3;
-  color: #030303;
+  background-color:  glob.$base---primary !important;
+  color: glob.$base---light !important;
   white-space: pre-wrap;
   max-width: 96vw !important;
   font-family: Onest !important;
-}
-.mat-simple-snackbar-action {
-  background-color:#242222;
-  border-radius: 5px;
-  color: #eee6e6;
-  
+  border-radius: glob.$corner-radius--m !important;
+
 }
 .mat-mdc-button {
     letter-spacing: unset !important;
     font-family: Onest !important;
+}
+.mat-mdc-snack-bar-action {
+  color: glob.$base---light-hover !important;
+  border: 1px groove glob.$base---light-hover !important;
+  border-radius: 6px !important;
+}
+.mdc-snackbar__label {
+  font-family: unset !important;
 }

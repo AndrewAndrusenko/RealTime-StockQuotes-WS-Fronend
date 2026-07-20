@@ -1,5 +1,4 @@
 import { TButtonName } from "../services/snacks.service"
-import {ENV} from '../../environments/environment'
 export interface IErrorHandler {
   code:number,
   messageToUI:string,
@@ -63,28 +62,29 @@ export interface IErrorCode {
     route:string,
     buttonName:TButtonName
 }
-export const errorsCode = new Map<number,IErrorCode> (
-[
-  [403,{
-    message:'Access is forbidden',
-    route:'back',
-    redirect:false,
-    buttonName:'Back'
-  }],
-  [401,{
-    message:'Your session is not authenticated.\n You have to Log In again',
-    route:ENV.AUTH_SERVER_UI_ADDRESS,
-    externalRoute:true,
-    redirect:true,
-    buttonName:'Go to login'
-  }],
-  [0,{
-    message:'Service is unavailable',
-    route:'',
-    redirect:false,
-    buttonName:'Okay'
-  }]
-]
+export const errorsCode = (AUTH_SERVER_UI_ADDRESS:string) => (  
+  new Map<number,IErrorCode> ([
+    [403,{
+      message:'Access is forbidden',
+      route:'back',
+      redirect:false,
+      buttonName:'Back'
+    }],
+    [401,{
+      message:'Your session is not authenticated.\n You have to Log In again',
+      route:AUTH_SERVER_UI_ADDRESS,
+      externalRoute:true,
+      redirect:true,
+      buttonName:'Go to login'
+    }],
+    [0,{
+      message:'Service is unavailable',
+      route:'',
+      redirect:false,
+      buttonName:'Okay'
+    }]
+  ])
+
 )
 export const errorsInfo = new Map<string,string> (
  [

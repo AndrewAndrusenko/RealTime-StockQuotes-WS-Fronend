@@ -19,9 +19,8 @@ import { BehaviorSubject, EMPTY, merge, MonoTypeOperatorFunction, Observable, of
 import { SnacksService } from './snacks.service';
 import { TConnectionStatus } from '../types/shared-models';
 import { IErrorHandler, SERVER_ERRORS } from '../types/errors-model';
-import { ENV } from '../../environments/environment';
 import { JwtHandlerService } from './jwt-handler.service';
-import { TitleStrategy } from '@angular/router';
+import { ConfigService } from './config.service';
 export interface IRate {
   //Intreface for received quotes from server
   time: Date; //quote rate
@@ -41,7 +40,7 @@ export class QuotesDataService {
   //Service to handle data
   private readonly snacksService = inject(SnacksService);
   private readonly jwtService = inject(JwtHandlerService);
-
+  private readonly CONFIG = inject(ConfigService).ENV_CONFIG
   private wsServer$: WebSocketSubject<TwsServerResponse> | undefined = undefined;
   //WSS Connection status for UI
   private readonly _connectionState$ = new BehaviorSubject<TConnectionStatus>('disconnected');
@@ -74,7 +73,7 @@ export class QuotesDataService {
     return this._connectionState$.value;
   }
 
-  public connectToWSServer(bufferPeriod = 500, endpoint = ENV.TEST_WS_ENDPOINT) {
+  public connectToWSServer(bufferPeriod = 500, endpoint = this.CONFIG.TEST_WS_ENDPOINT) {
     const currentConnectionState = this._connectionState$.value;
     if (currentConnectionState !== 'disconnected') {
       console.warn(
@@ -99,7 +98,7 @@ export class QuotesDataService {
       this.handleReconnecting()
     )
     //ui heartbeat ping
-    const uiPing$ = timer(ENV.PING_HEARTBEAT_INTERVAL, ENV.PING_HEARTBEAT_INTERVAL).pipe(
+    const uiPing$ = timer(this.CONFIG.PING_HEARTBEAT_INTERVAL, this.CONFIG.PING_HEARTBEAT_INTERVAL).pipe(
       tap(() => {
         if (this.wsServer$ && this.wsServer$.closed === false) {
           this.pingStartTime = performance.now();
@@ -166,7 +165,7 @@ export class QuotesDataService {
 
       //Error requires reconnection
       if (error?.retryConnection) {
-        const exponentDelay = Math.pow(2, this.retryAttemptNum) * ENV.RETRY_INTERVAL;
+        const exponentDelay = Math.pow(2, this.retryAttemptNum) * this.CONFIG.RETRY_INTERVAL;
         const jitterRate = 0.7 + Math.random() * 0.6;
         const finalDelay = Math.round(exponentDelay * jitterRate);
         this.reconnectNotify();
@@ -241,7 +240,7 @@ export class QuotesDataService {
     rawQuoteStream$
       .pipe(
         switchMap(() =>
-          timer(ENV.STREAM_TIMEOUT).pipe(
+          timer(this.CONFIG.STREAM_TIMEOUT).pipe(
             map(() => false), //stream is dead,
             startWith(true), // stream is up
           ),
@@ -252,7 +251,7 @@ export class QuotesDataService {
       .subscribe((isActive) => {
         this._streamActive$.value !== isActive ? this._streamActive$.next(isActive) : null;
         if (isActive === false) {
-          const errMsg = `Warning: There has been no new quote for ${ENV.STREAM_TIMEOUT / 1000} sec...`;
+          const errMsg = `Warning: There has been no new quote for ${this.CONFIG.STREAM_TIMEOUT / 1000} sec...`;
           this.snacksService.openSnack(errMsg, 'Okay', 'error-snackBar');
         } else {
           this.snacksService.openSnack('Stream is up and runnig', 'Okay', 'success-snackBar');

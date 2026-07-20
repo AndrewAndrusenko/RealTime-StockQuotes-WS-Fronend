@@ -6,6 +6,7 @@ import { SnacksService } from '../services/snacks.service';
 import { errorsCode, errorsInfo, IErrorCode } from '../types/errors-model';
 import { Location } from '@angular/common';
 import { JwtHandlerService } from '../services/jwt-handler.service';
+import { ConfigService } from '../services/config.service';
 
 @Injectable()
 export class HttpErrorsHandlerInterceptor implements HttpInterceptor {
@@ -13,6 +14,8 @@ export class HttpErrorsHandlerInterceptor implements HttpInterceptor {
   private snacksService = inject(SnacksService);
   private location = inject(Location);
   private jwtService = inject(JwtHandlerService);
+  private CONFIG = inject (ConfigService).ENV_CONFIG
+  private readonly errorCodesMap = errorsCode(this.CONFIG.AUTH_SERVER_UI_ADDRESS)
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     return next.handle(request).pipe(
@@ -49,7 +52,7 @@ export class HttpErrorsHandlerInterceptor implements HttpInterceptor {
   }
 
   showError(code: number, msg: string | null = ''): Observable<never> {
-    const errorOptions = errorsCode.get(code) as IErrorCode;
+    const errorOptions = this.errorCodesMap.get(code) as IErrorCode;
     return this.snacksService
       .openSnackObserve(errorOptions?.message + '\n ' + msg, errorOptions?.buttonName, 'error-snackBar')
       .pipe(

@@ -15,8 +15,8 @@ import {
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { SnacksService } from './snacks.service';
 import { SERVER_ERRORS } from '../types/errors-model';
-import { ENV } from '../../environments/environment';
 import { JwtHandlerService } from './jwt-handler.service';
+import { ConfigService } from './config.service';
 export interface IServerCommand {
   cmd: string; //command to server: start, stop
   timeToWork: number; //time of emmiting values in milliseconds
@@ -28,6 +28,7 @@ export interface IServerCommand {
 })
 export class TestingMngService {
   //Service to handle testing functionaly
+  private readonly CONFIG = inject(ConfigService).ENV_CONFIG
   private readonly snacksService = inject(SnacksService)
   private readonly jwtService =inject(JwtHandlerService)
   private readonly _streamStarted$ = new BehaviorSubject<boolean>(false);
@@ -50,7 +51,7 @@ export class TestingMngService {
   private createTestingStream() {
     //Creating stream of quotes for testing
     this._webSocketTest$ = webSocket({
-      url: ENV.TEST_WS_ENDPOINT + '/manage_connection',
+      url: this.CONFIG.TEST_WS_ENDPOINT + '/manage_connection',
       openObserver: {
         next: () => {
           this._serverConnection$.next(true);

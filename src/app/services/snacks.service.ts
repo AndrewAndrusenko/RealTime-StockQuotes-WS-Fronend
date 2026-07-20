@@ -6,7 +6,7 @@ import {
   TextOnlySnackBar,
 } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
-import { ENV } from '../../environments/environment';
+import { ConfigService } from './config.service';
 export type TPanelClass = 'success-snackBar' | 'error-snackBar';
 export type TButtonName = 'Okay' | 'Ok' | 'Back' | 'Go to login' | 'Delete';
 @Injectable({
@@ -14,14 +14,13 @@ export type TButtonName = 'Okay' | 'Ok' | 'Back' | 'Go to login' | 'Delete';
 })
 export class SnacksService {
   private snackBar = inject(MatSnackBar);
-  constructor() {}
-
+  private readonly CONFIG = inject(ConfigService).ENV_CONFIG
   openSnack(
     message: string,
     buttonName: TButtonName,
     panelClass: TPanelClass,
     verticalPosition: MatSnackBarVerticalPosition = 'top',
-    duration = ENV.SUCCESS_TIME_OUT,
+    duration = this.CONFIG.SUCCESS_TIME_OUT,
   ): MatSnackBarRef<TextOnlySnackBar> {
     return this.snackBar.open(message, buttonName, {
       panelClass: [panelClass],
@@ -35,7 +34,7 @@ export class SnacksService {
     buttonName: TButtonName,
     panelClass: TPanelClass,
     verticalPosition: MatSnackBarVerticalPosition = 'top',
-    duration = ENV.SUCCESS_TIME_OUT,
+    duration = this.CONFIG.SUCCESS_TIME_OUT,
   ): Observable<void> {
     return this.openSnack(message, buttonName, panelClass, verticalPosition, duration).onAction();
   }

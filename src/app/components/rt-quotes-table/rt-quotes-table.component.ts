@@ -5,8 +5,8 @@ import { QuotesDataService, IRate } from '../../services/quotes-data.service';
 import { FormControl } from '@angular/forms';
 import { AppStorage, StorageService, StorageType } from '../../services/storage.service';
 import { AuthService } from '../../services/auth.service';
-import { ENV } from '../../../environments/environment';
 import { SnacksService } from '../../services/snacks.service';
+import { ConfigService } from '../../services/config.service';
 @Component({
   selector: 'app-rt-quotes-table',
   templateUrl: './rt-quotes-table.component.html',
@@ -15,6 +15,7 @@ import { SnacksService } from '../../services/snacks.service';
   standalone: false,
 })
 export class RTQuotesTableComponent {
+  private readonly CONFIG = inject(ConfigService).ENV_CONFIG
   private snack = inject(SnacksService);
   private appStorage: AppStorage = inject(StorageService).storage(StorageType.IndexDB);
   private subsriptions = new Subscription();
@@ -107,7 +108,7 @@ export class RTQuotesTableComponent {
   logOut(loginAgain: boolean) {
     this.subsriptions.add(
       this.authService.logOut(this.authService.userData.userId).subscribe((res) => {
-        res && loginAgain ? (window.location.href = ENV.AUTH_SERVER_UI_ADDRESS) : null;
+        res && loginAgain ? (window.location.href = this.CONFIG.AUTH_SERVER_UI_ADDRESS) : null;
         res === false ? this.snack.openSnack('Logout error', 'Okay', 'error-snackBar') : null;
       }),
     );

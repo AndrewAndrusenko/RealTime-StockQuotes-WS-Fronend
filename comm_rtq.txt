@@ -122,6 +122,13 @@ RTQ - FrontEnd
   Strict class typing via interface implemention. 
   Correct error handling and passing errors down pipe 
   Fixed - verification of operation success
+
+20/07/26
+1. Runtime Configuration via json has been implemented and replaced enviroment.ts
+2. Code base was refactored implementing new config service
+3. Error code map was transfered to a factory function
+4. SnackBars styles have been fixed
+3. 
 ToDo:
 6. Decompose the quote service by business context (connection, streaming, watchdog). 
   -Infa layer - wss connect and disconnect
@@ -129,4 +136,3 @@ ToDo:
   -infa untils: watchdog and ui heartbeat ping 
 3. Refactor TestingMngService in accordance with QuotesDataService: reconnecting handler and so on
 4. Config json to implement. паттерн  Runtime Configuration (конфигурация во время выполнения)
-5. Storage service - error handling and refactor

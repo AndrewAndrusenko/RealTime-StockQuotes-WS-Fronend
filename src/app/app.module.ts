@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { inject, NgModule, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
 import { RTQuotesTableComponent } from './components/rt-quotes-table/rt-quotes-table.component';
@@ -10,7 +10,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { TestingPanelComponent } from './components/testing-panel/testing-panel.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { provideAnimations } from '@angular/platform-browser/animations';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
@@ -23,6 +22,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { MatMenuModule } from '@angular/material/menu';
 import { HttpErrorsHandlerInterceptor } from './interceptors/errors-http.interceptor';
+import { ConfigService } from './services/config.service';
 
 export const IndexDBConfig: DBConfig = {
   name: 'RTQ',
@@ -66,6 +66,10 @@ export const IndexDBConfig: DBConfig = {
     },
     [CookieService],
     provideHttpClient(withInterceptorsFromDi()),
+    provideAppInitializer(()=>{
+      const configService = inject(ConfigService)
+      return configService.loadConfigFile()
+    })
   ],
 })
 export class AppModule {}
