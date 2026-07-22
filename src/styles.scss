@@ -18,9 +18,9 @@ summary::-webkit-details-marker {
     display: none;
 }
 summary::before {
-    content: "▶";    /* Можно использовать любой символ или SVG-иконку */
+    content: "▶";   
     font-size: 12px;
-    transition: transform 0.2s ease; /* Плавный поворот */
+    transition: transform 0.2s ease; 
     margin-right: auto; 
 }
 details[open] summary::before {
