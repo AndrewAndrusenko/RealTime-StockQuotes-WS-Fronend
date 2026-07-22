@@ -10,10 +10,10 @@ import {
   tap,
 } from 'rxjs/operators';
 import { BehaviorSubject, Subject, timer } from 'rxjs';
-import { SnacksService } from '../shared/snacks.service';
-import { ConfigService } from '../core/config.service';
-import { WebSocketService } from '../core/websocket.service';
-import { IRate } from '../core/websocket.types';
+import { SnacksService } from '../../../shared/snacks.service';
+import { ConfigService } from '../../../core/config.service';
+import { WebSocketService } from '../../../core/websocket.service';
+import { IRate } from '../../../core/websocket.types';
 @Injectable()
 export class QuotesDataService {
   //Service to handle data

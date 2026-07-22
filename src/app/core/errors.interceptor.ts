@@ -3,10 +3,10 @@ import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse
 import { catchError, Observable, switchMap, take, tap, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 import { SnacksService } from '../shared/snacks.service';
-import { errorsCode, errorsInfo, IErrorCode } from '../types/errors-model';
 import { Location } from '@angular/common';
 import { JwtHandlerService } from './jwt.service';
 import { ConfigService } from './config.service';
+import { errorsCode, errorsInfo, IErrorCode } from './error-codes-maps';
 
 @Injectable()
 export class HttpErrorsHandlerInterceptor implements HttpInterceptor {

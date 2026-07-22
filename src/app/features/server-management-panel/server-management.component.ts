@@ -1,16 +1,16 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { TestingMngService } from '../../services/testing-mng.service';
+import { TestingMngService } from './data-access/server-management.service';
 import { WebSocketService } from '../../core/websocket.service';
 @Component({
-  selector: 'app-testing-panel',
-  templateUrl: './testing-panel.component.html',
-  styleUrls: ['./testing-panel.component.scss'],
+  selector: 'app-server-management-panel',
+  templateUrl: './server-management.component.html',
+  styleUrls: ['./server-management.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers:[WebSocketService,TestingMngService],
   standalone: false,
 })
-export class TestingPanelComponent {
+export class ServerManagementPanelComponent {
   public wssCore = inject(WebSocketService);
   private testingService = inject(TestingMngService);
   public panelOpenStateSD: boolean = true; //status of extension panel

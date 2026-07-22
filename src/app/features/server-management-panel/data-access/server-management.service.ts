@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { DestroyRef, inject, Injectable } from '@angular/core';
-import { ConfigService } from '../core/config.service';
-import { WebSocketService } from '../core/websocket.service';
-import { IServerCommand } from '../core/websocket.types';
+import { ConfigService } from '../../../core/config.service';
+import { WebSocketService } from '../../../core/websocket.service';
+import { IServerCommand } from '../../../core/websocket.types';
 import { filter, takeWhile } from 'rxjs';
-import { SnacksService } from '../shared/snacks.service';
+import { SnacksService } from '../../../shared/snacks.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Injectable()
 export class TestingMngService {

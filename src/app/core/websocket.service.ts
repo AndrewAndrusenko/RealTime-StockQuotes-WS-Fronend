@@ -13,11 +13,10 @@ import {
 } from 'rxjs/operators';
 import { BehaviorSubject, EMPTY, merge, MonoTypeOperatorFunction, Observable, of, Subject, timer } from 'rxjs';
 import { SnacksService } from '../shared/snacks.service';
-import { TConnectionStatus } from '../types/shared-models';
-import { IErrorHandler, SERVER_ERRORS } from '../types/errors-model';
 import { JwtHandlerService } from './jwt.service';
 import { ConfigService } from './config.service';
-import { IRate, IServerCommand, TwsServerResponse } from './websocket.types';
+import { IRate, IServerCommand, TConnectionStatus, TwsServerResponse } from './websocket.types';
+import { IErrorHandler, SERVER_ERRORS } from './error-codes-maps';
 
 @Injectable()
 export class WebSocketService {

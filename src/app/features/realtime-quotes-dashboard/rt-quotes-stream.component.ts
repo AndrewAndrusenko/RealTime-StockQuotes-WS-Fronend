@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { debounceTime, filter, Observable, of, Subscription, switchMap } from 'rxjs';
-import { QuotesDataService } from '../../services/quotes-data.service';
+import { QuotesDataService } from './data-access/quotes-data.service';
 import { FormControl } from '@angular/forms';
 import { AppStorage, StorageService, StorageType } from '../../core/storage.service';
 import { AuthService } from '../../core/auth.service';
@@ -10,14 +10,14 @@ import { ConfigService } from '../../core/config.service';
 import { IRate } from '../../core/websocket.types';
 import { WebSocketService } from '../../core/websocket.service';
 @Component({
-  selector: 'app-rt-quotes-table',
-  templateUrl: './rt-quotes-table.component.html',
-  styleUrls: ['./rt-quotes-table.component.scss'],
+  selector: 'app-rt-quotes-stream',
+  templateUrl: './rt-quotes-stream.component.html',
+  styleUrls: ['./rt-quotes-stream.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: false,
   providers:[WebSocketService,QuotesDataService]
 })
-export class RTQuotesTableComponent {
+export class RealTimeQuotesStreamComponent {
   private readonly CONFIG = inject(ConfigService).ENV_CONFIG
   private snack = inject(SnacksService);
   private appStorage: AppStorage = inject(StorageService).storage(StorageType.IndexDB);

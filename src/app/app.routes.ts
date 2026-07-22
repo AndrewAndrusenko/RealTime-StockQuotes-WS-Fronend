@@ -1,11 +1,11 @@
 import { RouterModule, Routes } from '@angular/router';
-import { RTQuotesTableComponent } from './components/rt-quotes-table/rt-quotes-table.component';
+import { RealTimeQuotesStreamComponent } from './features/realtime-quotes-dashboard/rt-quotes-stream.component';
 import { NgModule } from '@angular/core';
 
 export const appRoutes: Routes  = [
   {
     path:'',
-    component:RTQuotesTableComponent,
+    component:RealTimeQuotesStreamComponent,
   }
 ];
 @NgModule ({

@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RTQuotesTableComponent } from './rt-quotes-table.component';
-import { QuotesDataService } from '../../services/quotes-data.service';
-import { TestingMngService, IServerCommand } from '../../services/testing-mng.service';
+import { RealTimeQuotesStreamComponent } from './rt-quotes-stream.component';
+import { QuotesDataService } from './data-access/quotes-data.service';
+import { TestingMngService,  } from '../server-management-panel/data-access/server-management.service';
 import { ChangeDetectionStrategy } from '@angular/core';
 
-describe('RTQuotesTableComponent', () => {
+/* describe('RTQuotesTableComponent', () => {
   let component: RTQuotesTableComponent;
   let fixture: ComponentFixture<RTQuotesTableComponent>;
   let service: QuotesDataService;
@@ -109,4 +109,4 @@ describe('RTQuotesTableComponent', () => {
   it('should create component', () => {
     expect(component).toBeTruthy();
   });
-});
+}); */

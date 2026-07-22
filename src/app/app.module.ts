@@ -1,14 +1,14 @@
 import { inject, NgModule, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
-import { RTQuotesTableComponent } from './components/rt-quotes-table/rt-quotes-table.component';
+import { RealTimeQuotesStreamComponent } from './features/realtime-quotes-dashboard/rt-quotes-stream.component';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
-import { TestingPanelComponent } from './components/testing-panel/testing-panel.component';
+import { ServerManagementPanelComponent } from './features/server-management-panel/server-management.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -36,7 +36,7 @@ export const IndexDBConfig: DBConfig = {
   ],
 };
 @NgModule({
-  declarations: [AppComponent, RTQuotesTableComponent, TestingPanelComponent],
+  declarations: [AppComponent, RealTimeQuotesStreamComponent,ServerManagementPanelComponent],
   bootstrap: [AppComponent],
   imports: [
     BrowserModule,

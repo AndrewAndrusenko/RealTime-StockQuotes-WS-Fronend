@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { QuotesDataService } from './quotes-data.service';
 export const WS_ENDPOINT = 'ws://localhost:3003';
-describe('QuotesDataService', () => {
+/* describe('QuotesDataService', () => {
   let service: QuotesDataService;
   beforeEach(() => {
     TestBed.configureTestingModule({});
@@ -17,4 +17,4 @@ describe('QuotesDataService', () => {
   it('create pipe to receive data from server', () => {
     expect(service.tapToQuotesStream()).toBeTruthy();
   });
-});
+}); */

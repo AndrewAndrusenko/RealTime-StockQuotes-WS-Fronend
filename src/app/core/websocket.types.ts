@@ -1,3 +1,4 @@
+export type TConnectionStatus = 'disconnected'|'connected'|'Reconnecting'|'Connecting'|'Disconnecting'
 export interface IRate {
   //Intreface for received quotes from server
   time: Date; //quote rate

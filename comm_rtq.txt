@@ -152,8 +152,10 @@ RTQ - FrontEnd
 5. Feature: WebSocketService: Added public method sendCommandToServer$. The method allows consumers to send message to the ws server.
 Feature is being used by TestingMngService in order to initiate quotes stream
 
+22/07/26 - 2
+1 Vertical Slice Architecture has been implemented
+
 ToDo:
-6. Decompose the quote service by business context (connection, streaming, watchdog). 
-  -Infa layer - wss connect and disconnect
-  -business layer - streaming/domain
-  -infa untils: watchdog and ui heartbeat ping 
+2 standalone
+3 signals?
+4 zoneless, request frame when frequency is high
