@@ -1,14 +1,31 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TestingMngService } from './data-access/server-management.service';
 import { WebSocketService } from '../../core/websocket.service';
+import { AsyncPipe, NgClass, TitleCasePipe } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
 @Component({
   selector: 'app-server-management-panel',
   templateUrl: './server-management.component.html',
   styleUrls: ['./server-management.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers:[WebSocketService,TestingMngService],
-  standalone: false,
+  imports:[
+    AsyncPipe,
+    NgClass,
+    TitleCasePipe,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatIconModule,
+    ReactiveFormsModule
+  ],
+  providers:[
+    WebSocketService,
+    TestingMngService
+  ],
 })
 export class ServerManagementPanelComponent {
   public wssCore = inject(WebSocketService);

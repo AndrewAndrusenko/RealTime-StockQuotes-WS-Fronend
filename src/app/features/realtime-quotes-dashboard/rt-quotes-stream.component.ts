@@ -2,20 +2,51 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { debounceTime, filter, Observable, of, Subscription, switchMap } from 'rxjs';
 import { QuotesDataService } from './data-access/quotes-data.service';
-import { FormControl } from '@angular/forms';
+import { FormControl, FormsModule, NgModel, ReactiveFormsModule } from '@angular/forms';
 import { AppStorage, StorageService, StorageType } from '../../core/storage.service';
 import { AuthService } from '../../core/auth.service';
 import { SnacksService } from '../../shared/snacks.service';
 import { ConfigService } from '../../core/config.service';
 import { IRate } from '../../core/websocket.types';
 import { WebSocketService } from '../../core/websocket.service';
+import { MatIconModule } from '@angular/material/icon';
+import { ServerManagementPanelComponent } from '../server-management-panel/server-management.component';
+import { AsyncPipe, DatePipe, NgClass, PercentPipe } from '@angular/common';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatSliderModule } from '@angular/material/slider';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
 @Component({
   selector: 'app-rt-quotes-stream',
   templateUrl: './rt-quotes-stream.component.html',
   styleUrls: ['./rt-quotes-stream.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: false,
-  providers:[WebSocketService,QuotesDataService]
+  imports:[
+    AsyncPipe,
+    MatTooltipModule,
+    MatMenuModule,
+    MatSliderModule,
+    FormsModule,
+    MatProgressBarModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    ReactiveFormsModule,
+    NgClass,
+    PercentPipe,
+    DatePipe,
+    MatIconModule,
+    MatButtonModule,
+    ServerManagementPanelComponent,
+  ],
+  providers:[
+    WebSocketService,
+    QuotesDataService
+  ]
 })
 export class RealTimeQuotesStreamComponent {
   private readonly CONFIG = inject(ConfigService).ENV_CONFIG

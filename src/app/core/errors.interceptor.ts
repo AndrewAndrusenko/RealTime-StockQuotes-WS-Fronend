@@ -1,5 +1,5 @@
-import { inject, Injectable } from '@angular/core';
-import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { HttpRequest,  HttpErrorResponse, HttpInterceptorFn, HttpHandlerFn } from '@angular/common/http';
 import { catchError, Observable, switchMap, take, tap, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 import { SnacksService } from '../shared/snacks.service';
@@ -8,41 +8,39 @@ import { JwtHandlerService } from './jwt.service';
 import { ConfigService } from './config.service';
 import { errorsCode, errorsInfo, IErrorCode } from './error-codes-maps';
 
-@Injectable()
-export class HttpErrorsHandlerInterceptor implements HttpInterceptor {
-  private router = inject(Router);
-  private snacksService = inject(SnacksService);
-  private location = inject(Location);
-  private jwtService = inject(JwtHandlerService);
-  private CONFIG = inject (ConfigService).ENV_CONFIG
-  private readonly errorCodesMap = errorsCode(this.CONFIG.AUTH_SERVER_UI_ADDRESS)
+export const errorsIterceptor:HttpInterceptorFn = (
+  request: HttpRequest<unknown>, 
+  next: HttpHandlerFn
+) => {
+  const CONFIG = inject (ConfigService).ENV_CONFIG
+  const router = inject(Router);
+  const location = inject(Location);
+  const snacksService = inject(SnacksService);
+  const jwtService = inject(JwtHandlerService);
+  return next(request).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 511) {
+        jwtService.refreshToken();
+        return jwtService.refreshTokenReady$.pipe(
+          take(1),
+          switchMap(() => next(request)),
+        );
+      }
+      return handleErrorCode(error);
+    }),
+  );
 
-  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    return next.handle(request).pipe(
-      catchError((error: HttpErrorResponse) => {
-        if (error.status === 511) {
-          this.jwtService.refreshToken();
-          return this.jwtService.refreshTokenReady$.pipe(
-            take(1),
-            switchMap(() => next.handle(request)),
-          );
-        }
-        return this.handleErrorCode(error);
-      }),
-    );
-  }
-
-  handleErrorCode(error: HttpErrorResponse): Observable<never> {
+  function handleErrorCode(error: HttpErrorResponse): Observable<never> {
     switch (error.status) {
       case 401:
-        return this.showError(401, error?.error);
+        return showError(401, error?.error);
       case 403:
-        return this.showError(403);
+        return showError(403);
       case 0:
-        return this.showError(0);
+        return showError(0);
       default:
         console.log('def err', error);
-        this.snacksService.openSnack(
+        snacksService.openSnack(
           `Module:${error.error.ml} | Code: ${errorsInfo.get(error.error.msg) || error.error.msg}`,
           'Okay',
           'error-snackBar',
@@ -50,10 +48,10 @@ export class HttpErrorsHandlerInterceptor implements HttpInterceptor {
         return throwError(() => error);
     }
   }
-
-  showError(code: number, msg: string | null = ''): Observable<never> {
-    const errorOptions = this.errorCodesMap.get(code) as IErrorCode;
-    return this.snacksService
+  
+  function showError(code: number, msg: string | null = ''): Observable<never> {
+    const errorOptions = errorsCode(CONFIG.AUTH_SERVER_UI_ADDRESS).get(code) as IErrorCode;
+    return snacksService
       .openSnackObserve(errorOptions?.message + '\n ' + msg, errorOptions?.buttonName, 'error-snackBar')
       .pipe(
         tap(() => {
@@ -62,10 +60,10 @@ export class HttpErrorsHandlerInterceptor implements HttpInterceptor {
             if (errorOptions.externalRoute) {
               window.location.href = errorOptions?.route;
             } else {
-              this.router.navigate([errorOptions?.route]);
+              router.navigate([errorOptions?.route]);
             }
           } else if (errorOptions.route === 'back') {
-            this.location.back();
+            location.back();
           }
         }),
         switchMap(() => throwError(() => new Error(`Error ${code}) has been handled`))),

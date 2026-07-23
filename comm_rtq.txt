@@ -155,7 +155,11 @@ Feature is being used by TestingMngService in order to initiate quotes stream
 22/07/26 - 2
 1 Vertical Slice Architecture has been implemented
 
+23/07/26
+Standalone migration
+1. App has been migrated to standalone architecture
+2. Error interceptor has been refactored to functional api
+
 ToDo:
-2 standalone
 3 signals?
 4 zoneless, request frame when frequency is high

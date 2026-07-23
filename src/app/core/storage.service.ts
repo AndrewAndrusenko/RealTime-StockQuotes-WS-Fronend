@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { NgxIndexedDBService } from 'ngx-indexed-db';
 import { catchError, map, Observable, of, throwError } from 'rxjs';
 import { CookieService } from 'ngx-cookie-service';
-import { IndexDBConfig } from '../app.module';
+import { IndexDBConfig } from '../app.config';
 export enum StorageType {
   Cookie,
   IndexDB,

@@ -1,15 +1,10 @@
-import { RouterModule, Routes } from '@angular/router';
-import { RealTimeQuotesStreamComponent } from './features/realtime-quotes-dashboard/rt-quotes-stream.component';
-import { NgModule } from '@angular/core';
+import { Routes } from '@angular/router';
 
-export const appRoutes: Routes  = [
+export const appRoutes: Routes = [
   {
     path:'',
-    component:RealTimeQuotesStreamComponent,
+    pathMatch: 'full',
+    loadComponent: () => import('./features/realtime-quotes-dashboard/rt-quotes-stream.component')
+    .then(c=>c.RealTimeQuotesStreamComponent)
   }
-];
-@NgModule ({
-  imports:[RouterModule.forRoot(appRoutes)],
-  exports:[RouterModule]
-})
-export class AppRouteModule {}
+]
